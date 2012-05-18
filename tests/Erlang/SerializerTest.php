@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @author      Stanislav Seletskiy <s.seletskiy@office.ngs.ru>
+ * @copyright   2012
+ */
+
 /** Test helper. */
 if (file_exists(dirname(__FILE__) . '/../TestHelper.php')) {
 	require_once dirname(__FILE__) . '/../TestHelper.php';
@@ -53,7 +58,13 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 	}
 
 
-	public function testcanSerializeString()
+	public function testCanSerializeStringNumberAsNumber()
+	{
+		$this->assertSerialized('12345', "12345");
+	}
+
+
+	public function testCanSerializeString()
 	{
 		$this->assertSerialized('"string"', "string");
 	}
@@ -65,9 +76,31 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 	}
 
 
-	public function testCanSerializeNumericList()
+	public function testCanSerializeNumericListAsList()
 	{
 		$this->assertSerialized('[1, 2, 3]', array(1, 2, 3));
+	}
+
+
+	public function testCanSerializeNumericListAsTuple()
+	{
+		$this->assertSerialized('{1, 2, 3}', array(1, 2, 3), array('::array' => 'tuple'));
+	}
+
+
+	public function testCanSerializeNumericListAsListOfTuples()
+	{
+		$this->assertSerialized(
+			'[{0, "test"}, {1, "value"}]',
+			array(0 => "test", 1 => "value"),
+			array('^/::array/' => 'keytuple'));
+	}
+
+
+	public function testCanSerializeNestedItemsWithDifferentSetOfRules()
+	{
+		$this->assertSerialized('[1, 2, {3, 4, 5}]', array(1, 2, array(3, 4, 5)),
+			array('^/.*/::array' => 'tuple'));
 	}
 
 
@@ -113,15 +146,63 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 	}
 
 
+	public function testCanSetSchemaByType()
+	{
+		$this->assertSerialized("atom", "atom", array('::string' => 'atom'));
+	}
+
+
+	public function testCanSerializeKeyAsString()
+	{
+		$this->assertSerialized('[{"key1", 1}, {"key2", 2}]', array('key1' => 1, 'key2' => 2),
+			array('::array/@key' => 'string'));
+	}
+
+
+	public function testCanSerializeExactKeyWithSpecificSchema()
+	{
+		$this->assertSerialized('["test", {1, "bla"}]', array('test', 'bla'),
+			array('::array#1/' => 'keytuple'));
+	}
+
+
+	public function testCanSpecifyArrayItemSchemaByType()
+	{
+		$this->assertSerialized('[{0, "test"}, {1, "bla"}]', array('test', 'bla'),
+			array('::array#::number/' => 'keytuple'));
+	}
+
+
+	public function testCanSerializeExactKeyWithSpecificSchema2()
+	{
+		$this->assertSerialized('["test", {"lala", "bla"}]', array('test', 'lala' => 'bla'),
+			array('::array#"lala"/@key' => 'string'));
+	}
+
+
+	public function testCanSerializeAssocItemAsIs()
+	{
+		$this->assertSerialized('["test"]', array('bla' => "test"),
+			array('#::string/' => 'is'));
+	}
+
+
+	public function testCanSerializeDeepNestedArrays()
+	{
+		$this->assertSerialized('[[[[[[[[1]]]]]]]]', array(array(array(array(array(array(array(array(1)))))))));
+	}
+
+
 	/**
 	 * Asserts $in value correctly serialized in erlang format.
 	 *
 	 * @param mixed $in Input data to serialize.
 	 * @param string $expected Expected result.
 	 */
-	protected function assertSerialized($expected, $in)
+	protected function assertSerialized($expected, $in, $schema = array())
 	{
-		$this->assertEquals($expected, $this->_serializer->serialize($in));
+		$this->assertEquals($expected,
+			$this->_serializer->serialize($in, $schema));
 	}
 }
 
