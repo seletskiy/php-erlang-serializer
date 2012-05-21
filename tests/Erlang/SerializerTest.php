@@ -27,9 +27,7 @@ if (!defined('PHPUnit_MAIN_METHOD')) {
  * Testcase for Erlang Serializer.
  *
  * @category    Erlang
- * @package     Erlang_Serializer
- * @author      Stanislav Seletskiy <s.seletskiy@office.ngs.ru>
- * @copyright   2012 NGS
+ * @package     Erlang\Serializer
  */
 class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 {
@@ -93,14 +91,14 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 		$this->assertSerialized(
 			'[{0, "test"}, {1, "value"}]',
 			array(0 => "test", 1 => "value"),
-			array('^/::array/' => 'keytuple'));
+			array('/::array/' => 'keytuple'));
 	}
 
 
 	public function testCanSerializeNestedItemsWithDifferentSetOfRules()
 	{
 		$this->assertSerialized('[1, 2, {3, 4, 5}]', array(1, 2, array(3, 4, 5)),
-			array('^/.*/::array' => 'tuple'));
+			array('/*/::array' => 'tuple'));
 	}
 
 
