@@ -23,7 +23,9 @@ require_once "Erlang/Serializer/Array.php";
  *
  * Of course, you can set custom serialization rules, {@see serialize}.
  *
- * @package Erlang\Serializer
+ * @category    Erlang
+ * @package     Erlang\Serializer
+ * @author      Stanislav Seletskiy <s.seletskiy@office.ngs.ru>
  */
 class Erlang_Serializer
 {
@@ -32,12 +34,14 @@ class Erlang_Serializer
 
 	/** @var array Default serialization scheme. */
 	protected $_scheme = array(
+		'::numeric' => 'number',
+		'::number' => 'number',
 		'::string' => 'string',
 		'::array' => 'list',
-		'::array#::number/' => 'is',
-		'::array#::string/' => 'keytuple',
-		'::array#::number/@key' => 'is',
-		'::array#::string/@key' => 'atom'
+		'::array#::number@keyvalue' => 'is',
+		'::array#::string@keyvalue' => 'keytuple',
+		'::array#::number@key' => 'is',
+		'::array#::string@key' => 'atom'
 	);
 
 
@@ -46,7 +50,8 @@ class Erlang_Serializer
 	 *
 	 * Register base element serializers.
 	 *
-	 * @param array $serializer	Custom serializers.
+	 * @param array $scheme Serialization scheme ({@see serialize()}).
+	 * @param array $serializer	Custom serializers ({@see Erlang_Serialize_Null}).
 	 */
 	public function __construct($scheme = array(), $serializers = array())
 	{
@@ -70,15 +75,19 @@ class Erlang_Serializer
 	 *
 	 * Default serialization scheme:
 	 * * `null` serializes as `nil` atom.
-	 * * all `php-strings` serialized as `erlang-strings`;
-	 * * all `numeric keys in arrays` serialized as `lists`;
-	 * * all `assoc keys in arrays` serialized as `tuple` `{key, value}`;
-	 * * all `array keys` serialized as `atom`;
+	 * * all `php strings` serialized as `erlang strings`;
+	 * * all `numbers` serialized as `numbers`;
+	 * * all `string numbers` serialized as `numbers`;
+	 * * all `arrays` serialized as `lists`;
+	 * * all `numeric items in arrays` serialized as `lists`;
+	 * * all `assoc items in arrays` serialized as `tuple` `{$key, $value}`;
+	 * * all `numeric array keys` serialized as `number`;
+	 * * all `string array keys` serialized as `atom`;
 	 *
 	 * You can specify serialization scheme using simple rules:
 	 * `array($selector => $type, ...)`
 	 *
-	 * Where `$selector` is a pattern (with anchor `$`) for `path` to currently
+	 * Where `$selector` is a pattern for `path` to currently
 	 * serialized item.
 	 *
 	 * Path constructed this way:
@@ -86,10 +95,18 @@ class Erlang_Serializer
 	 * * `::array` added for nested array element;
 	 * * `::string` added for nested string element;
 	 * * `::number` added for nested number element;
-	 * * `#key` added for every `key` in array;
+	 * * `#$num` for numeric keys of array;
+	 * * `#"$key"` for string keys of array;
 	 * * additional `/` added for every nest level;
-	 * * you may use `@key` to specify target type for key of array,
-	 *   not for matching item.
+	 * * `@key` to specify key of currently serialized item of array;
+	 * * `@keyvalue` to specify pair `$key => $value` of currenly serialized element.
+	 *
+	 * Note: if you want to specify way of serialization pair `$key => $value` in array,
+	 * e.g. if you want serialize `array(1 => "bla")` into `[{1, "bla"}]`, you need
+	 * to specify scheme for `@keyvalue` selector, e.g. `/::array@keyvalue => keytuple`.
+	 *
+	 * In a pattern you can use wildcard `*` to skip anything on current
+	 * nest level (e.g. between / and next /).
 	 *
 	 * Examples:
 	 * * `array("bla" => array(3 => "test"))`, the `test` element
@@ -102,35 +119,46 @@ class Erlang_Serializer
 	 * ** `#3/` - any `3` key in any array;
 	 * * `array("bla" => 1, "lala" => 2)`, the `lala` key can be
 	 *   identified by:
-	 * ** `/::array#lala/@key` - exact match;
-	 * ** `#lala/@key` - `lala` key in any array;
+	 * ** `/::array#lala@key` - exact match;
+	 * ** `#lala@key` - `lala` key in any array;
 	 *
-	 * You can use scheme for types:
+	 * You can use this target erlang types for selectors:
+	 * * `::number`:
+	 * ** `number` (default);
+	 * ** `string`;
+	 * * `::numeric` (number strings, such as "1234"):
+	 * ** `number` (default);
+	 * ** `string`;
 	 * * `::array`:
 	 * ** `list` (default);
 	 * ** `tuple`;
 	 * * `::string`:
 	 * ** `atom` (default for array keys);
 	 * ** `string` (default for other strings);
-	 * * `::array#::number` (numeric array item):
+	 * * `::array#::number@keyvalue` (numeric array item):
 	 * ** `is` (default, key will be ommited);
 	 * ** `keytuple` (serializes into `tuple` `{key, value}`);
-	 * * `::array#::string` (assoc array item):
+	 * * `::array#::string@keyvalue` (assoc array item):
 	 * ** `keytuple` (default, serializes into `tuple` `{key, value}`);
 	 * ** `is` (key will be ommited);
-	 * * `/@key` (keys for arrays):
+	 * * `::array#::number@key` (numeric keys for arrays):
+	 * ** `number` (default);
+	 * ** `atom`;
+	 * ** `string`;
+	 * * `::array#::string@key` (string keys for arrays):
 	 * ** `atom` (default);
 	 * ** `string`;
 	 *
 	 * @param mixed $data Data for serialization.
-	 * @param array $scheme Serialization scheme.
+	 * @param array $scheme Serialization scheme (override default).
 	 * @return string Erlang term.
 	 */
 	public function serialize($data, $scheme = array())
 	{
-		$result = array(array('data' => $data, 'stack' => array()));
+		$result = array(array('data' => $data, 'path' => array()));
 
 		do {
+			// Do a loop while all data will be serialized.
 			$result = $this->_serializePartial($result, $scheme + $this->_scheme);
 		} while (count($result) != 1 && is_string($result[0]));
 
@@ -145,8 +173,8 @@ class Erlang_Serializer
 	 *
 	 * `$partial` is a simple `array`, that contains:
 	 * * `string` for fully serialized item;
-	 * * `array('data' => $data, 'stack' => $stack)` for not serialized yet item,
-	 *   where `$data` is data to serialize and `$stack` is part of path,
+	 * * `array('data' => $data, 'path' => $path)` for not serialized yet item,
+	 *   where `$data` is data to serialize and `$path` is part of path,
 	 *   that describe path to `$data` in full data array (from `serialize()` function).
 	 *
 	 * `$partial` data is returned by many serializer functions to prevent deep nested
@@ -170,7 +198,7 @@ class Erlang_Serializer
 			// If we have an array, then it is unserialized data, so
 			// we trying to serialize it.
 			if (is_array($part)) {
-				$serialized = $this->_serializeDataWithStack($part['data'], $scheme, $part['stack']);
+				$serialized = $this->_serializeDataWithStack($part['data'], $scheme, $part['path']);
 				// `$result[] = join($buffer)` is a wrong solution here,
 				// because of `join(array()) == ""`, and we don't want
 				// empty element in result array.
@@ -190,15 +218,15 @@ class Erlang_Serializer
 	 * Serializes specified php value (using path stack).
 	 *
 	 * @param mixed $data Input data.
-	 * @param array $stack Path stack for scheme matching.
+	 * @param array $path Path stack for scheme matching.
 	 * @return array List of serialized components.
 	 */
-	protected function _serializeDataWithStack($data, $scheme, $stack)
+	protected function _serializeDataWithStack($data, $scheme, $path)
 	{
 		// Chain of serializators.
 		// Every invokation trying to serialize data if `$complete` is false.
 		foreach ($this->_serializers as $serializer) {
-			$result = $serializer->serialize($data, $scheme, $stack);
+			$result = $serializer->serialize($data, $scheme, $path);
 			if (!is_null($result)) {
 				return $result;
 			}

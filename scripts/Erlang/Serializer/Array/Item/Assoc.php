@@ -17,6 +17,7 @@ require_once "Erlang/Serializer/Array/Key.php";
  *
  * @category    Erlang
  * @package     Erlang\Serializer
+ * @author      Stanislav Seletskiy <s.seletskiy@office.ngs.ru>
  * @internal
  */
 class Erlang_Serializer_Array_Item_Assoc extends Erlang_Serializer_Abstract
@@ -39,12 +40,12 @@ class Erlang_Serializer_Array_Item_Assoc extends Erlang_Serializer_Abstract
 	 *
 	 * @param mixed $data Data to serialize.
 	 * @param array $scheme Serialization scheme.
-	 * @param array $stack Path to item.
+	 * @param array $path Path to item.
 	 * @return array Partial result of serialization.
 	 */
-	public function serialize($data, $scheme = array(), $stack = array())
+	public function serialize($data, $scheme = array(), $path = array())
 	{
-		parent::serialize($data, $scheme, $stack);
+		parent::serialize($data, $scheme, $path);
 
 		if (!is_array($data)) {
 			return null;
@@ -56,7 +57,7 @@ class Erlang_Serializer_Array_Item_Assoc extends Erlang_Serializer_Abstract
 
 		$path = $this->_serializers->string->serialize(key($data));
 
-		return $this->_serializeData($data, array("#$path/", '#::string/', '/'));
+		return $this->_serializeData($data, array("#$path", '#::string', ''), '@keyvalue');
 	}
 
 
@@ -68,8 +69,11 @@ class Erlang_Serializer_Array_Item_Assoc extends Erlang_Serializer_Abstract
 	 */
 	protected function _serializeAsKeytuple($keyvalue)
 	{
+		// removing @keyvalue
+		array_pop($this->_path);
+
 		$serializedKey = $this->_serializers->key->serialize(key($keyvalue),
-			$this->_scheme, $this->_stack);
+			$this->_scheme, $this->_path);
 		$serializedVal = $this->_makePartial(current($keyvalue));
 
 		return array('{', $serializedKey, ', ', $serializedVal, '}');
@@ -82,6 +86,8 @@ class Erlang_Serializer_Array_Item_Assoc extends Erlang_Serializer_Abstract
 	 */
 	protected function _serializeAsIs($keyvalue)
 	{
+		array_pop($this->_path);
+
 		return array($this->_makePartial(current($keyvalue)));
 	}
 }

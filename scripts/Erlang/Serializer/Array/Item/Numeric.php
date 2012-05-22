@@ -17,6 +17,7 @@ require_once "Erlang/Serializer/Abstract.php";
  *
  * @category    Erlang
  * @package     Erlang\Serializer
+ * @author      Stanislav Seletskiy <s.seletskiy@office.ngs.ru>
  * @internal
  */
 class Erlang_Serializer_Array_Item_Numeric extends Erlang_Serializer_Array_Item_Assoc
@@ -26,12 +27,12 @@ class Erlang_Serializer_Array_Item_Numeric extends Erlang_Serializer_Array_Item_
 	 *
 	 * @param mixed $data Data to serialize `array($key => $value)`.
 	 * @param array $scheme Serialization scheme.
-	 * @param array $stack Path to item.
+	 * @param array $path Path to item.
 	 * @return array Partial result of serialization.
 	 */
-	public function serialize($data, $scheme = array(), $stack = array())
+	public function serialize($data, $scheme = array(), $path = array())
 	{
-		Erlang_Serializer_Abstract::serialize($data, $scheme, $stack);
+		Erlang_Serializer_Abstract::serialize($data, $scheme, $path);
 
 		if (!is_array($data)) {
 			return null;
@@ -42,6 +43,6 @@ class Erlang_Serializer_Array_Item_Numeric extends Erlang_Serializer_Array_Item_
 			return null;
 		}
 
-		return $this->_serializeData($data, array("#$key/", '#::number/', '/'));
+		return $this->_serializeData($data, array("#$key", '#::number', ''), '@keyvalue');
 	}
 }
