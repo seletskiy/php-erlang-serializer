@@ -203,6 +203,30 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 	}
 
 
+	public function testCanRaiseExceptionOnUnknownType()
+	{
+		try {
+			$this->_serializer->serialize("123", array("::numeric" => 'bla?'));
+		} catch (Erlang_Serializer_Exception $e) {
+			$this->assertEquals("Undefined type `bla?` in scheme `/::numeric => bla?`",
+				$e->getMessage());
+		}
+	}
+
+
+	public function testCanRaiseExceptionOnUndeterminedRule()
+	{
+		$this->markTestSkipped('Impossible situation, for debug only.');
+
+		try {
+			$this->_serializer->serialize("123");
+		} catch (Erlang_Serializer_Exception $e) {
+			$this->assertEquals("Can not determine target type for current element in path `/::numeric`",
+				$e->getMessage());
+		}
+	}
+
+
 	public function testCanSerializeDeepNestedArrays()
 	{
 		$this->assertSerialized('[[[[[[[[[[1]]]]]]]]]]', array(array(array(array(array(array(array(array(array(array(1)))))))))));

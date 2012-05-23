@@ -71,21 +71,25 @@ class Erlang_Serializer_Abstract
 	protected function _serializeData($data, $path/*, $path */)
 	{
 		$path = array_slice(func_get_args(), 1);
-		$path = array_map(function ($v) { return (array)$v; }, $path);
+		$path = array_map(
+			function ($v) {
+				return (array)$v;
+			}, $path);
+		$shortPath = join(array_filter(array_map('current', $path)));
 
 		$this->_path = array_merge($this->_path, $path);
 
 		$type = $this->_matcher->match($this->_path, $this->_scheme);
 		if (is_null($type)) {
 			throw new Erlang_Serializer_Exception(
-				'Can not determine target type for current element, '
-				. 'path: ' . join(array_filter(array_map('current', $this->_path)))
-			);
+				'Can not determine target type for current element in '
+				. "path `$shortPath`");
 		}
 
 		$serializer = '_serializeAs' . $type;
 		if (!is_callable(array($this, $serializer))) {
-			return null;
+			throw new Erlang_Serializer_Exception(
+				"Undefined type `$type` in scheme `$shortPath => $type`");
 		}
 
 		$result = $this->$serializer($data);

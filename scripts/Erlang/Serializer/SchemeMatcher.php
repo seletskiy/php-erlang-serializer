@@ -86,13 +86,13 @@ class Erlang_Serializer_SchemeMatcher
 	 * @param array $path Path to current element.
 	 * @return bool|null true, if entire pattern matches, false if entire pattern is not matched, null otherwise.
 	 */
-	public function _matchPatternTail(&$tail, &$path)
+	protected function _matchPatternTail(&$tail, &$path)
 	{
 		if (empty($tail) && empty($path)) {
 			return true;
 		}
 
-		if (empty($tail) xor empty($path)) {
+		if (empty($tail) ^ empty($path)) {
 			return false;
 		}
 
@@ -120,7 +120,7 @@ class Erlang_Serializer_SchemeMatcher
 	 * @param array $variants Variants of one level of path.
 	 * @return string 'match' if matches, 'nomatch' otherwise, 'skip' if current part of path can be skipped.
 	 */
-	public function _matchPathComponent($pattern, $variants)
+	protected function _matchPathComponent($pattern, $variants)
 	{
 		if (!in_array($pattern[0], $this->_delims)) {
 			$pattern = '/' . $pattern;
@@ -150,9 +150,12 @@ class Erlang_Serializer_SchemeMatcher
 
 
 	/**
-	 * 
+	 * Parses user specified pattern to internal format.
+	 *
+	 * @param string $pattern User specified pattern {@see Erlang_Serializer::serialize()}.
+	 * @return array Pattern in internal format.
 	 */
-	public function _parsePattern($pattern)
+	protected function _parsePattern($pattern)
 	{
 		$delims = preg_quote(join($this->_delims), '!');
 		$regexp = "!([$delims][^$delims]+)!";
