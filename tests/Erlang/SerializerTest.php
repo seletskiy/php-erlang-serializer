@@ -90,7 +90,7 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 
 	public function testCanSerializeNumericListAsTuple()
 	{
-		$this->assertSerialized('{1, 2, 3}', array(1, 2, 3), array('::array' => 'tuple'));
+		$this->assertSerialized('{1, 2, 3}', array(1, 2, 3), array('array' => 'tuple'));
 	}
 
 
@@ -99,14 +99,14 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 		$this->assertSerialized(
 			'[{0, "test"}, {1, "value"}]',
 			array(0 => "test", 1 => "value"),
-			array('/::array@keyvalue' => 'keytuple'));
+			array('/array@keyvalue' => 'keytuple'));
 	}
 
 
 	public function testCanSerializeNestedItemsWithDifferentSetOfRules()
 	{
 		$this->assertSerialized('[1, 2, {3, 4, 5}]', array(1, 2, array(3, 4, 5)),
-			array('/*/::array' => 'tuple'));
+			array('/*/array' => 'tuple'));
 	}
 
 
@@ -154,68 +154,68 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 
 	public function testCanSetSchemaByType()
 	{
-		$this->assertSerialized("atom", "atom", array('::string' => 'atom'));
+		$this->assertSerialized("atom", "atom", array('string' => 'atom'));
 	}
 
 
 	public function testCanSerializeKeyAsString()
 	{
 		$this->assertSerialized('[{"key1", 1}, {"key2", 2}]', array('key1' => 1, 'key2' => 2),
-			array('::array@key' => 'string'));
+			array('array@key' => 'string'));
 	}
 
 
 	public function testCanSerializeExactKeyWithSpecificSchema()
 	{
 		$this->assertSerialized('["test", {1, "bla"}]', array('test', 'bla'),
-			array('::array#1@keyvalue' => 'keytuple'));
+			array('array#1@keyvalue' => 'keytuple'));
 	}
 
 
 	public function testCanSpecifyArrayItemSchemaByType()
 	{
 		$this->assertSerialized('[{0, "test"}, {1, "bla"}]', array('test', 'bla'),
-			array('::array#::number@keyvalue' => 'keytuple'));
+			array('array#number@keyvalue' => 'keytuple'));
 	}
 
 
 	public function testCanSerializeExactKeyWithSpecificSchema2()
 	{
 		$this->assertSerialized('["test", {"lala", "bla"}]', array('test', 'lala' => 'bla'),
-			array('::array#"lala"@key' => 'string'));
+			array('array#"lala"@key' => 'string'));
 	}
 
 
 	public function testCanSerializeAssocItemAsIs()
 	{
 		$this->assertSerialized('["test"]', array('bla' => "test"),
-			array('#::string@keyvalue' => 'is'));
+			array('#string@keyvalue' => 'is'));
 	}
 
 
 	public function testCanExtendBasicScheme()
 	{
 		$this->_serializer = new Erlang_Serializer(array(
-			'::array' => 'tuple',
-			'::array#1/' => 'atom'));
+			'array' => 'tuple',
+			'array#1/' => 'atom'));
 
 		$this->assertSerialized('{"lala", atom, 123}', array('lala', 'atom', '123'),
-			array('::array#2/' => 'number'));
+			array('array#2/' => 'number'));
 	}
 
 
 	public function testCanSerializeNumericStringAsString()
 	{
-		$this->assertSerialized('"123"', '123', array('::numeric' => 'string'));
+		$this->assertSerialized('"123"', '123', array('numeric' => 'string'));
 	}
 
 
 	public function testCanRaiseExceptionOnUnknownType()
 	{
 		try {
-			$this->_serializer->serialize("123", array("::numeric" => 'bla?'));
+			$this->_serializer->serialize("123", array('numeric' => 'bla?'));
 		} catch (Erlang_Serializer_Exception $e) {
-			$this->assertEquals("Undefined type `bla?` in scheme `/::numeric => bla?`",
+			$this->assertEquals("Undefined type `bla?` in scheme `/numeric => bla?`",
 				$e->getMessage());
 		}
 	}
@@ -228,7 +228,7 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 		try {
 			$this->_serializer->serialize("123");
 		} catch (Erlang_Serializer_Exception $e) {
-			$this->assertEquals("Can not determine target type for current element in path `/::numeric`",
+			$this->assertEquals("Can not determine target type for current element in path `/numeric`",
 				$e->getMessage());
 		}
 	}

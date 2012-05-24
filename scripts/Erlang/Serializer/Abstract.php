@@ -65,7 +65,7 @@ class Erlang_Serializer_Abstract
 	 *
 	 * @param mixed $data Data to serialize;
 	 * @param string $default Name of default target type for current element.
-	 * @param array $path Path components to current element (e.g. `#1`, `#::number` and so on)
+	 * @param array $path Path components to current element (e.g. `#1`, `#number` and so on)
 	 * @return array Partial result of serialization.
 	 */
 	protected function _serializeData($data, $path/*, $path */)

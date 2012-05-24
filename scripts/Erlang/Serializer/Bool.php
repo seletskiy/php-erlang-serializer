@@ -36,6 +36,6 @@ class Erlang_Serializer_Bool extends Erlang_Serializer_Abstract
 		}
 
 		return $this->_serializers->string->serialize(
-			$data ? "true" : "false", array('::string' => 'atom'), $path);
+			$data ? "true" : "false", array('string' => 'atom'), $path);
 	}
 }

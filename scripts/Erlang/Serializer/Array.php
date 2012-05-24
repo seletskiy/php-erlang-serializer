@@ -57,7 +57,7 @@ class Erlang_Serializer_Array extends Erlang_Serializer_Abstract
 			return null;
 		}
 
-		return $this->_serializeData($data, array('/::array', '/'));
+		return $this->_serializeData($data, array('/array', '/'));
 	}
 
 	/**

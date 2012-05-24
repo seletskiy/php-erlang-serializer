@@ -41,13 +41,13 @@ class Erlang_Serializer_String extends Erlang_Serializer_Abstract
 	 */
 	public function serialize($data, $scheme = array(), $path = array())
 	{
-		parent::serialize($data, $scheme + array('::string' => 'string'), $path);
+		parent::serialize($data, $scheme + array('string' => 'string'), $path);
 
 		if (!is_string($data)) {
 			return null;
 		}
 
-		return $this->_serializeData($data, array('/::string', '/'));
+		return $this->_serializeData($data, array('/string', '/'));
 	}
 
 

@@ -31,9 +31,9 @@ class Erlang_Serializer_Number extends Erlang_Serializer_Abstract
 		}
 
 		if (is_string($data)) {
-			return $this->_serializeData($data, array('/::numeric', '/'));
+			return $this->_serializeData($data, array('/numeric', '/'));
 		} else {
-			return $this->_serializeData($data, array('/::number', '/'));
+			return $this->_serializeData($data, array('/number', '/'));
 		}
 	}
 

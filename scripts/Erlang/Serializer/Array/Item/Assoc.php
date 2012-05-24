@@ -57,7 +57,7 @@ class Erlang_Serializer_Array_Item_Assoc extends Erlang_Serializer_Abstract
 
 		$path = $this->_serializers->string->serialize(key($data));
 
-		return $this->_serializeData($data, array("#$path", '#::string', ''), '@keyvalue');
+		return $this->_serializeData($data, array("#$path", '#string', ''), '@keyvalue');
 	}
 
 

@@ -38,14 +38,14 @@ class Erlang_Serializer
 
 	/** @var array Default serialization scheme. */
 	protected $_scheme = array(
-		'::numeric' => 'number',
-		'::number' => 'number',
-		'::string' => 'string',
-		'::array' => 'list',
-		'::array#::number@keyvalue' => 'is',
-		'::array#::string@keyvalue' => 'keytuple',
-		'::array#::number@key' => 'is',
-		'::array#::string@key' => 'atom'
+		'numeric' => 'number',
+		'number' => 'number',
+		'string' => 'string',
+		'array' => 'list',
+		'array#number@keyvalue' => 'is',
+		'array#string@keyvalue' => 'keytuple',
+		'array#number@key' => 'is',
+		'array#string@key' => 'atom'
 	);
 
 
@@ -97,9 +97,9 @@ class Erlang_Serializer
 	 *
 	 * Path constructed this way:
 	 * * always begins from `/`, that represent root element;
-	 * * `::array` added for nested array element;
-	 * * `::string` added for nested string element;
-	 * * `::number` added for nested number element;
+	 * * `array` added for nested array element;
+	 * * `string` added for nested string element;
+	 * * `number` added for nested number element;
 	 * * `#$num` for numeric keys of array;
 	 * * `#"$key"` for string keys of array;
 	 * * additional `/` added for every nest level;
@@ -108,7 +108,7 @@ class Erlang_Serializer
 	 *
 	 * Note: if you want to specify way of serialization pair `$key => $value` in array,
 	 * e.g. if you want serialize `array(1 => "bla")` into `[{1, "bla"}]`, you need
-	 * to specify scheme for `@keyvalue` selector, e.g. `/::array@keyvalue => keytuple`.
+	 * to specify scheme for `@keyvalue` selector, e.g. `/array@keyvalue => keytuple`.
 	 *
 	 * In a pattern you can use wildcard `*` to skip anything on current
 	 * nest level (e.g. between / and next /).
@@ -116,41 +116,41 @@ class Erlang_Serializer
 	 * Examples:
 	 * * `array("bla" => array(3 => "test"))`, the `test` element
 	 *   can be identified by:
-	 * ** `/::array#bla/::array#3/` - exact match;
-	 * ** `/::array#::string/::array#::number` - fuzzy match;
-	 * ** `/::array/::array/` - matches for any key names;
+	 * ** `/array#bla/array#3/` - exact match;
+	 * ** `/array#string/array#number` - fuzzy match;
+	 * ** `/array/array/` - matches for any key names;
 	 * ** `/<star>/<star>/` - same as above (<star> stands for * symbol)
-	 * ** `::array/` - matches any nested array;
+	 * ** `array/` - matches any nested array;
 	 * ** `#3/` - any `3` key in any array;
 	 * * `array("bla" => 1, "lala" => 2)`, the `lala` key can be
 	 *   identified by:
-	 * ** `/::array#lala@key` - exact match;
+	 * ** `/array#lala@key` - exact match;
 	 * ** `#lala@key` - `lala` key in any array;
 	 *
 	 * You can use this target erlang types for selectors:
-	 * * `::number`:
+	 * * `number`:
 	 * ** `number` (default);
 	 * ** `string`;
-	 * * `::numeric` (number strings, such as "1234"):
+	 * * `numeric` (number strings, such as "1234"):
 	 * ** `number` (default);
 	 * ** `string`;
-	 * * `::array`:
+	 * * `array`:
 	 * ** `list` (default);
 	 * ** `tuple`;
-	 * * `::string`:
+	 * * `string`:
 	 * ** `atom` (default for array keys);
 	 * ** `string` (default for other strings);
-	 * * `::array#::number@keyvalue` (numeric array item):
+	 * * `array#number@keyvalue` (numeric array item):
 	 * ** `is` (default, key will be ommited);
 	 * ** `keytuple` (serializes into `tuple` `{key, value}`);
-	 * * `::array#::string@keyvalue` (assoc array item):
+	 * * `array#string@keyvalue` (assoc array item):
 	 * ** `keytuple` (default, serializes into `tuple` `{key, value}`);
 	 * ** `is` (key will be ommited);
-	 * * `::array#::number@key` (numeric keys for arrays):
+	 * * `array#number@key` (numeric keys for arrays):
 	 * ** `number` (default);
 	 * ** `atom`;
 	 * ** `string`;
-	 * * `::array#::string@key` (string keys for arrays):
+	 * * `array#string@key` (string keys for arrays):
 	 * ** `atom` (default);
 	 * ** `string`;
 	 *

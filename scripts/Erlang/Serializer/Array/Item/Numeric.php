@@ -43,6 +43,6 @@ class Erlang_Serializer_Array_Item_Numeric extends Erlang_Serializer_Array_Item_
 			return null;
 		}
 
-		return $this->_serializeData($data, array("#$key", '#::number', ''), '@keyvalue');
+		return $this->_serializeData($data, array("#$key", '#number', ''), '@keyvalue');
 	}
 }

@@ -36,6 +36,6 @@ class Erlang_Serializer_Null extends Erlang_Serializer_Abstract
 		}
 
 		return $this->_serializers->string->serialize(
-			"nil", array('::string' => 'atom'), $path);
+			"nil", array('string' => 'atom'), $path);
 	}
 }
