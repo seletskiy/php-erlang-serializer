@@ -57,6 +57,13 @@ class Erlang_SerializerTest extends PHPUnit_Framework_TestCase
 	}
 
 
+	public function testCanSerializeBool()
+	{
+		$this->assertSerialized('true', true);
+		$this->assertSerialized('false', false);
+	}
+
+
 	public function testCanSerializeStringNumberAsString()
 	{
 		$this->assertSerialized('12345', "12345");

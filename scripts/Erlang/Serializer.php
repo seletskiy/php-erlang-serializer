@@ -18,6 +18,10 @@ require_once "Erlang/Serializer/String.php";
 require_once "Erlang/Serializer/Array.php";
 
 
+/** @see Erlang_Serializer_Bool */
+require_once "Erlang/Serializer/Bool.php";
+
+
 /**
  * Serializer to erlang term format.
  *
@@ -57,6 +61,7 @@ class Erlang_Serializer
 	{
 		$this->_serializers = array(
 			new Erlang_Serializer_Null,
+			new Erlang_Serializer_Bool,
 			new Erlang_Serializer_Number,
 			new Erlang_Serializer_String,
 			new Erlang_Serializer_Array
