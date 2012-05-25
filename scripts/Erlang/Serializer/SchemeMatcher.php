@@ -19,6 +19,10 @@ class Erlang_Serializer_SchemeMatcher
 	protected $_delims = array('/', '#', '@');
 
 
+	/** @var array Pattern cache. */
+	protected static $_cache = array();
+
+
 	/**
 	 * Trying to find user defined type for current path.
 	 *
@@ -46,33 +50,14 @@ class Erlang_Serializer_SchemeMatcher
 	protected function _matchPattern($path, $pattern)
 	{
 		$absolute = $pattern[0] == '/';
-		$stack = array(0);
-		while (!empty($stack)) {
-			$pathIndex = array_pop($stack);
+		$pattern = $this->_preparePattern($pattern);
 
-			$pathTail = array_slice($path, $pathIndex);
+		do {
+			// Do a loop while pattern or path is not empty.
+			$result = $this->_matchPatternHead($pattern, $path, $absolute);
+		} while (!is_bool($result));
 
-			if (empty($pathTail)) {
-				break;
-			}
-
-			if (!$absolute) {
-				array_unshift($stack, $pathIndex + 1);
-			}
-
-			$patternTail = $this->_parsePattern($pattern);
-
-			do {
-				// Do a loop while pattern or path is not empty.
-				$result = $this->_matchPatternTail($patternTail, $pathTail);
-			} while (!is_bool($result));
-
-			if ($result) {
-				return true;
-			}
-		}
-
-		return false;
+		return $result;
 	}
 
 
@@ -82,30 +67,34 @@ class Erlang_Serializer_SchemeMatcher
 	 * This function matches only first element, and if
 	 * it matches, shifts input arrays to one element.
 	 *
-	 * @param array $tail Prepared pattern, {@see _parsePattern()}
+	 * @param array $pattern Prepared pattern, {@see _preparePattern()}
 	 * @param array $path Path to current element.
 	 * @return bool|null true, if entire pattern matches, false if entire pattern is not matched, null otherwise.
 	 */
-	protected function _matchPatternTail(&$tail, &$path)
+	protected function _matchPatternHead(&$pattern, &$path, $absolute)
 	{
-		if (empty($tail) && empty($path)) {
-			return true;
-		}
-
-		if (empty($tail) ^ empty($path)) {
+		if (count($pattern) > count($path)) {
 			return false;
 		}
 
-		$match = $this->_matchPathComponent($tail[0], $path[0]);
+		if (empty($pattern)) {
+			if (empty($path) || !$absolute) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		$match = $this->_matchPathComponent(end($pattern), end($path));
 		switch ($match) {
 			case 'nomatch':
 				return false;
 			case 'match':
-				array_shift($tail);
-				array_shift($path);
+				array_pop($pattern);
+				array_pop($path);
 				return null;
 			case 'skip':
-				array_shift($path);
+				array_pop($path);
 				return null;
 			default:
 				return null;
@@ -116,28 +105,13 @@ class Erlang_Serializer_SchemeMatcher
 	/**
 	 * Tries to match one part of pattern to one level of path.
 	 *
-	 * @param string $pattern Part of pattern ({@see _parsePattern()})
+	 * @param string $pattern Part of pattern ({@see _preparePattern()})
 	 * @param array $variants Variants of one level of path.
 	 * @return string 'match' if matches, 'nomatch' otherwise, 'skip' if current part of path can be skipped.
 	 */
 	protected function _matchPathComponent($pattern, $variants)
 	{
-		if (!in_array($pattern[0], $this->_delims)) {
-			$pattern = '/' . $pattern;
-		}
-
-		$pattern = preg_quote($pattern, '/');
-		// Need to replace all \* to [^\/]*
-		// Five slashes are:
-		//   \* is a simple star in preg_replace
-		//   \\ is a simple slash in one quoted string
-		//   \\ interpreted as single slash by preg_replace
-		// So, preg_replace got '/\\\*/' pattern.
-		$regexp = preg_replace('/\\\\\*/', '[^\/]*', $pattern);
-		$regexp = "/^$regexp$/";
-
-
-		if (preg_grep($regexp, $variants)) {
+		if (preg_grep($pattern, $variants)) {
 			return 'match';
 		} else {
 			if (array_search('', $variants) !== false) {
@@ -155,12 +129,36 @@ class Erlang_Serializer_SchemeMatcher
 	 * @param string $pattern User specified pattern {@see Erlang_Serializer::serialize()}.
 	 * @return array Pattern in internal format.
 	 */
-	protected function _parsePattern($pattern)
+	protected function _preparePattern($pattern)
 	{
+		if (isset(self::$_cache[$pattern])) {
+			return self::$_cache[$pattern];
+		}
+
 		$delims = preg_quote(join($this->_delims), '!');
 		$regexp = "!([$delims][^$delims]+)!";
 		$flags = PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE;
 
-		return preg_split($regexp, $pattern, null, $flags);
+		$prepared = preg_split($regexp, $pattern, null, $flags);
+
+		foreach ($prepared as &$part) {
+			if (!in_array($part[0], $this->_delims)) {
+				$part = '/' . $part;
+			}
+
+			$part = preg_quote($part, '/');
+			// Need to replace all \* to [^\/]*
+			// Five slashes are:
+			//   \* is a simple star in preg_replace
+			//   \\ is a simple slash in one quoted string
+			//   \\ interpreted as single slash by preg_replace
+			// So, preg_replace got '/\\\*/' pattern.
+			$part = preg_replace('/\\\\\*/', '[^\/]*', $part);
+			$part = "/^$part$/";
+		}
+
+		self::$_cache[$pattern] = $prepared;
+
+		return $prepared;
 	}
 }

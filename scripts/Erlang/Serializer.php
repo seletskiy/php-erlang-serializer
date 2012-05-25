@@ -17,7 +17,6 @@ require_once "Erlang/Serializer/String.php";
 /** @see Erlang_Serializer_Array */
 require_once "Erlang/Serializer/Array.php";
 
-
 /** @see Erlang_Serializer_Bool */
 require_once "Erlang/Serializer/Bool.php";
 
